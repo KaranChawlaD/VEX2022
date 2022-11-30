@@ -32,6 +32,8 @@ motor LeftMotor = motor(PORT1, ratio18_1, false);
 
 motor RightMotor = motor(PORT2, ratio18_1, true);
 
+motor armMotor = motor(PORT3, ratio6_1, false);
+
 
 
 
@@ -53,18 +55,58 @@ bool RemoteControlCodeEnabled = true;
   
 // Allows for easier use of the VEX Library
 using namespace vex;
+// competition Competition;
 
-int main() {
-  //autonomous
+// #define armSpinForward armMotor.setVelocity(100, percent)
 
-  //teleop
+void armSpinForward() {
+  armMotor.setVelocity(100, percent);
+}
+
+void armSpinStop() {
+  armMotor.setVelocity(0, percent);
+}
+
+void armSpinReverse() {
+  armMotor.setVelocity(-100, percent);
+}
+
+void runOnAutonomous() {
+  Brain.Screen.print("Running auto");
+
+}
+
+void runOnDriverControl() {
+  Brain.Screen.print("Running teleop");
+  armMotor.setVelocity(0, percent);
+
   while (true) {
+
+    //drivetrain
     LeftMotor.setVelocity((Controller1.Axis3.position() + Controller1.Axis4.position()), percent);
     RightMotor.setVelocity((Controller1.Axis3.position() - Controller1.Axis4.position()), percent);
     LeftMotor.spin(forward);
     RightMotor.spin(forward); 
-    
-    wait(20, msec);
+
+    //arm motor
+
+    Controller1.ButtonR1.pressed(armSpinForward);
+    Controller1.ButtonR1.released(armSpinStop);
+    Controller1.ButtonL1.pressed(armSpinReverse);
+    Controller1.ButtonL1.released(armSpinStop);
+    armMotor.spin(forward);
+
+  }
+
+}
+
+int main() {
+
+  // runOnAutonomous();
+  runOnDriverControl();
+
+  while (true) {
+    wait(0.05, seconds);
   }
 
 }
