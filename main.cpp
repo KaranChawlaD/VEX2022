@@ -28,11 +28,15 @@ brain Brain;
 
 // Robot configuration code.
 controller Controller1 = controller(primary);
-motor LeftMotor = motor(PORT1, ratio18_1, false);
-
-motor RightMotor = motor(PORT2, ratio18_1, true);
-
 motor armMotor = motor(PORT3, ratio6_1, false);
+
+motor LeftDriveSmart = motor(PORT4, ratio18_1, false);
+motor RightDriveSmart = motor(PORT5, ratio18_1, true);
+drivetrain Drivetrain = drivetrain(LeftDriveSmart, RightDriveSmart, 319.19, 317.5, 117.475, mm, 1);
+
+motor FlyWheelMotorA = motor(PORT1, ratio18_1, false);
+motor FlyWheelMotorB = motor(PORT2, ratio18_1, true);
+motor_group FlyWheel = motor_group(FlyWheelMotorA, FlyWheelMotorB);
 
 
 
@@ -55,55 +59,61 @@ bool RemoteControlCodeEnabled = true;
   
 // Allows for easier use of the VEX Library
 using namespace vex;
-// competition Competition;
+competition Competition;
 
-// #define armSpinForward armMotor.setVelocity(100, percent)
+void armSpinForward() {armMotor.setVelocity(100, percent);}
+void armSpinStop() {armMotor.setVelocity(0, percent);}
+void armSpinReverse() {armMotor.setVelocity(-100, percent);}
+void armAutoShoot() {armSpinForward(); wait(3, seconds); armSpinStop();}
+void flyWheelForward() {FlyWheel.setVelocity(100, percent); FlyWheel.spin(forward);}
+void flyWheelStop() {FlyWheel.stop();}
 
-void armSpinForward() {
-  armMotor.setVelocity(100, percent);
-}
-
-void armSpinStop() {
-  armMotor.setVelocity(0, percent);
-}
-
-void armSpinReverse() {
-  armMotor.setVelocity(-100, percent);
-}
-
-void runOnAutonomous() {
+void runOnAutonomous(void) {
   Brain.Screen.print("Running auto");
-
+  Drivetrain.driveFor(forward, 24, inches);
+  Drivetrain.turnFor(right, 90, degrees);
+  armAutoShoot();
+  Drivetrain.turnFor(left, 90, degrees);
+  Drivetrain.driveFor(forward, 4, inches);
+  Drivetrain.turnFor(right, 100, degrees);
+  armAutoShoot();
+  
 }
 
-void runOnDriverControl() {
+void runOnDriverControl(void) {
   Brain.Screen.print("Running teleop");
   armMotor.setVelocity(0, percent);
 
   while (true) {
 
     //drivetrain
-    LeftMotor.setVelocity((Controller1.Axis3.position() + Controller1.Axis4.position()), percent);
-    RightMotor.setVelocity((Controller1.Axis3.position() - Controller1.Axis4.position()), percent);
-    LeftMotor.spin(forward);
-    RightMotor.spin(forward); 
-
+    LeftDriveSmart.setVelocity((Controller1.Axis3.position() + Controller1.Axis4.position())/2, percent);
+    RightDriveSmart.setVelocity((Controller1.Axis3.position() - Controller1.Axis4.position()/2), percent);
+    LeftDriveSmart.spin(forward);
+    RightDriveSmart.spin(forward); 
+    
+    
     //arm motor
-
     Controller1.ButtonR1.pressed(armSpinForward);
     Controller1.ButtonR1.released(armSpinStop);
     Controller1.ButtonL1.pressed(armSpinReverse);
     Controller1.ButtonL1.released(armSpinStop);
+
     armMotor.spin(forward);
 
+    //flywheel
+    Controller1.ButtonR2.pressed(flyWheelForward);
+    Controller1.ButtonR2.released(flyWheelStop);
+
+    flyWheelForward();
   }
 
 }
 
 int main() {
 
-  // runOnAutonomous();
-  runOnDriverControl();
+  Competition.autonomous(runOnAutonomous);
+  Competition.drivercontrol(runOnDriverControl);
 
   while (true) {
     wait(0.05, seconds);
