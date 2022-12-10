@@ -28,14 +28,14 @@ brain Brain;
 
 // Robot configuration code.
 controller Controller1 = controller(primary);
-motor armMotor = motor(PORT3, ratio6_1, false);
+motor armMotor = motor(PORT3, ratio36_1, false);
 
-motor LeftDriveSmart = motor(PORT4, ratio18_1, false);
-motor RightDriveSmart = motor(PORT5, ratio18_1, true);
+motor LeftDriveSmart = motor(PORT4, ratio6_1, false);
+motor RightDriveSmart = motor(PORT5, ratio6_1, true);
 drivetrain Drivetrain = drivetrain(LeftDriveSmart, RightDriveSmart, 319.19, 317.5, 117.475, mm, 1);
 
-motor FlyWheelMotorA = motor(PORT1, ratio18_1, false);
-motor FlyWheelMotorB = motor(PORT2, ratio18_1, true);
+motor FlyWheelMotorA = motor(PORT1, ratio6_1, false);
+motor FlyWheelMotorB = motor(PORT2, ratio6_1, true);
 motor_group FlyWheel = motor_group(FlyWheelMotorA, FlyWheelMotorB);
 
 
@@ -64,20 +64,37 @@ competition Competition;
 void armSpinForward() {armMotor.setVelocity(100, percent);}
 void armSpinStop() {armMotor.setVelocity(0, percent);}
 void armSpinReverse() {armMotor.setVelocity(-100, percent);}
-void armAutoShoot() {armSpinForward(); wait(3, seconds); armSpinStop();}
 void flyWheelForward() {FlyWheel.setVelocity(100, percent); FlyWheel.spin(forward);}
 void flyWheelStop() {FlyWheel.stop();}
 
 void runOnAutonomous(void) {
   Brain.Screen.print("Running auto");
+
+  armSpinForward();
+  armMotor.spin(forward);
   Drivetrain.driveFor(forward, 24, inches);
-  Drivetrain.turnFor(right, 90, degrees);
-  armAutoShoot();
-  Drivetrain.turnFor(left, 90, degrees);
+  Drivetrain.turnFor(right, 210, degrees);
+  armSpinStop();
+  armMotor.spin(forward);
+  flyWheelForward();
+  wait (1, seconds);
+  armSpinForward();
+  armMotor.spin(forward);
+  wait (3, seconds);
+  flyWheelStop();
+  Drivetrain.turnFor(left, 210, degrees);
   Drivetrain.driveFor(forward, 4, inches);
-  Drivetrain.turnFor(right, 100, degrees);
-  armAutoShoot();
-  
+  Drivetrain.turnFor(right, 230, degrees);
+  armSpinStop();
+  armMotor.spin(forward);
+  flyWheelForward();
+  wait (1, seconds);
+  armSpinForward();
+  armMotor.spin(forward);
+  wait (3, seconds);
+  flyWheelStop();
+  armSpinStop();
+  armMotor.spin(forward);
 }
 
 void runOnDriverControl(void) {
@@ -87,8 +104,16 @@ void runOnDriverControl(void) {
   while (true) {
 
     //drivetrain
-    LeftDriveSmart.setVelocity((Controller1.Axis3.position() + Controller1.Axis4.position())/2, percent);
-    RightDriveSmart.setVelocity((Controller1.Axis3.position() - Controller1.Axis4.position()/2), percent);
+    if (Controller1.Axis3.position() > 0.0) {
+      LeftDriveSmart.setVelocity((Controller1.Axis3.position() + Controller1.Axis4.position())/1.5, percent);
+      RightDriveSmart.setVelocity((Controller1.Axis3.position() - Controller1.Axis4.position())/1.5, percent);
+    }
+
+    else {
+      RightDriveSmart.setVelocity((Controller1.Axis3.position() + Controller1.Axis4.position())/1.5, percent);
+      LeftDriveSmart.setVelocity((Controller1.Axis3.position() - Controller1.Axis4.position())/1.5, percent);
+    }
+    
     LeftDriveSmart.spin(forward);
     RightDriveSmart.spin(forward); 
     
@@ -105,14 +130,15 @@ void runOnDriverControl(void) {
     Controller1.ButtonR2.pressed(flyWheelForward);
     Controller1.ButtonR2.released(flyWheelStop);
 
-    flyWheelForward();
+    // flyWheelForward();
   }
 
 }
 
 int main() {
-
-  Competition.autonomous(runOnAutonomous);
+  
+  // runOnAutonomous();
+  // Competition.autonomous(runOnAutonomous);
   Competition.drivercontrol(runOnDriverControl);
 
   while (true) {
